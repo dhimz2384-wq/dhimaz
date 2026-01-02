@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doushi, Russia & Germany Hub</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-image: url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=2000'); 
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center; /* Akan diubah via JS saat login */
+            transition: all 0.5s ease;
+        }
+
+        /* EFEK LOADING */
+        #loading-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            color: white;
+        }
+        .spinner {
+            width: 60px; height: 60px;
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* KUNCI KONTAINER LOGIN */
+        .login-container {
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            width: 350px;
+            text-align: center;
+            position: relative;
+            z-index: 10;
+        }
+
+        .content-container {
+            display: none;
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 950px;
+            /* PERBAIKAN: Menghapus height fixed agar scroll mengikuti body */
+            margin: 40px 20px; 
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #2c3e50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        button:hover { background-color: #34495e; transform: scale(1.02); }
+
+        .logout-btn { background-color: #e74c3c; width: auto; padding: 10px 20px; margin-bottom: 20px; }
+        .logout-btn:hover { background-color: #c0392b; }
+
+        .card {
+            border-left: 6px solid #2c3e50;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 20px;
+            background-color: #f8f9fa;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            text-align: left;
+        }
+
+        .kanji { font-size: 2.2em; color: #d35400; }
+        .german-tag { color: #c0392b; font-weight: bold; }
+        .russia-tag { color: #2980b9; font-weight: bold; }
+        
+        .search-bar {
+            padding: 15px;
+            width: 100%;
+            border-radius: 30px;
+            border: 2px solid #eee;
+            margin-bottom: 20px;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <p id="loading-text">Sedang memproses...</p>
+    </div>
+
+    <div class="login-container" id="loginContainer">
+        <h2 style="color: #2c3e50;">Portal Doushi & Sejarah</h2>
+        <p style="color: #7f8c8d;">Gunakan akses tahun untuk masuk</p>
+        <form id="loginForm">
+            <input type="text" id="username" placeholder="Username (akbar)" required>
+            <input type="password" id="password" placeholder="Password (2010/2011/2012)" required>
+            <button type="submit">LOGIN</button>
+        </form>
+    </div>
+
+    <div class="content-container" id="historyRussiaContainer">
+        <div style="display:flex; justify-content: space-between; align-items: center;">
+            <h1 class="russia-tag">Sejarah Rusia</h1>
+            <button class="logout-btn" onclick="triggerLogout()">Logout</button>
+        </div>
+        <input type="text" class="search-bar" placeholder="Cari peristiwa Rusia..." onkeyup="searchContent('historyRussiaContainer')">
+        <div id="russia-list"></div>
+    </div>
+
+    <div class="content-container" id="doushiContainer">
+        <div style="display:flex; justify-content: space-between; align-items: center;">
+            <h1 style="color: #d35400;">Doushi (Kata Kerja)</h1>
+            <button class="logout-btn" onclick="triggerLogout()">Logout</button>
+        </div>
+        <input type="text" class="search-bar" placeholder="Cari Kanji/Arti..." onkeyup="searchContent('doushiContainer')">
+        <div id="verbs-list"></div>
+    </div>
+
+    <div class="content-container" id="historyGermanContainer">
+        <div style="display:flex; justify-content: space-between; align-items: center;">
+            <h1 class="german-tag">Sejarah Jerman</h1>
+            <button class="logout-btn" onclick="triggerLogout()">Logout</button>
+        </div>
+        <input type="text" class="search-bar" placeholder="Cari peristiwa Jerman..." onkeyup="searchContent('historyGermanContainer')">
+        <div id="german-list"></div>
+    </div>
+
+    <script>
+        // DATA (TIDAK BERUBAH)
+        const dataRusia = [
+            { title: "Kievan Rus' (862–1242)", desc: "Sejarah Rusia dimulai dengan berdirinya Kievan Rus' oleh bangsa Varangia (Viking) di bawah pimpinan Rurik. Puncak kejayaannya terjadi di bawah Vladimir yang Agung yang mengadopsi Kristen Ortodoks pada tahun 988. Namun, negara ini hancur berantakan ketika tentara Mongol (Golden Horde) menyerbu pada abad ke-13, menghancurkan Kiev, dan memaksa pangeran-pangeran Rusia membayar upeti selama lebih dari 200 tahun." },
+            { title: "Ivan IV: Sang Tsar Pertama", desc: "Ivan IV, yang lebih dikenal sebagai 'Ivan the Terrible', adalah penguasa pertama yang secara resmi menggunakan gelar 'Tsar'. Ia menaklukkan wilayah Kazan dan Astrakhan, memperluas wilayah Rusia hingga ke Siberia. Meskipun ia membangun Katedral Saint Basil yang ikonik, masa pemerintahannya diwarnai dengan kekejaman melalui pasukan polisi rahasia 'Oprichnina' yang membantai ribuan orang yang dianggap sebagai musuh politik." },
+            { title: "Peter Agung & Kekaisaran Rusia", desc: "Setelah masa kekacauan (Time of Troubles), Dinasti Romanov berkuasa. Peter Agung melakukan modernisasi radikal. Ia bepergian ke Eropa Barat untuk belajar pembuatan kapal dan teknologi militer. Ia memindahkan ibu kota ke St. Petersburg, membangun angkatan laut yang kuat, dan memenangkan Perang Utara melawan Swedia. Peter mengubah Keadipatian Moskow menjadi Kekaisaran Rusia yang modern dan bergaya Eropa." },
+            { title: "Catherine yang Agung", desc: "Seorang putri Jerman yang menjadi Maharani Rusia paling berpengaruh. Di bawah Catherine, Rusia memperluas wilayahnya ke Polandia dan Krimea. Ia dikenal sebagai penguasa 'Absolutisme Tercerah' karena ia mempromosikan seni, sastra, dan pendidikan, meskipun di sisi lain ia memperkuat sistem perbudakan (Serfdom) yang menyengsarakan kaum tani." },
+            { title: "Invasi Napoleon (1812)", desc: "Napoleon Bonaparte menyerbu Rusia dengan 600.000 pasukan. Rusia menggunakan strategi 'Bumi Hangus', membakar ladang dan kota (termasuk Moskow) agar pasukan Prancis kelaparan. 'Jenderal Musim Dingin' (suhu ekstrem) menghancurkan sisa-sisa pasukan Napoleon saat mereka mundur. Kemenangan ini membuat Rusia menjadi polisi penjaga perdamaian di Eropa selama beberapa dekade." },
+            { title: "Revolusi Rusia (1917)", desc: "Kekalahan di Perang Dunia I dan krisis kelaparan memicu kemarahan rakyat. Revolusi Februari menggulingkan Tsar Nicholas II, mengakhiri kekuasaan Romanov. Namun, pemerintahan sementara gagal, sehingga pada Oktober, kelompok Bolshevik pimpinan Vladimir Lenin merebut kekuasaan. Ini memicu Perang Saudara Rusia yang brutal antara Tentara Merah (Komunis) dan Tentara Putih (Monarki/Liberal)." },
+            { title: "Era Joseph Stalin", desc: "Stalin mengubah Uni Soviet dari negara agraris menjadi kekuatan industri militer dalam waktu singkat melalui program 'Rencana Lima Tahun'. Namun, ini harus dibayar mahal dengan kelaparan hebat (Holodomor) dan 'Pembersihan Besar-Besaran' (Great Purge) di mana jutaan orang yang dianggap pengkhianat dikirim ke kamp kerja paksa Gulag atau dieksekusi." },
+            { title: "Perang Dunia II (Great Patriotic War)", desc: "Jerman Nazi mengkhianati pakta non-agresi dan menyerang Soviet dalam Operasi Barbarossa. Pertempuran Stalingrad dan Kursk menjadi titik balik dunia. Uni Soviet kehilangan sekitar 27 juta nyawa, namun Tentara Merah berhasil memukul balik hingga menduduki Berlin pada 1945, menjadikan Soviet satu dari dua negara adidaya dunia (Superpower)." },
+            { title: "Runtuhnya Uni Soviet (1991)", desc: "Kelesuan ekonomi dan tekanan politik membuat Mikhail Gorbachev memperkenalkan kebijakan Glasnost (Keterbukaan) dan Perestroika (Restrukturisasi). Bukannya membaik, hal ini justru memicu gelombang kemerdekaan di negara-negara bagian (Baltik, Ukraina, Georgia). Pada Desember 1991, Uni Soviet resmi bubar dan Federasi Rusia lahir dengan Boris Yeltsin sebagai presiden pertama." }
+        ];
+
+        const dataKanji = [
+            { kanji: "行く", kana: "いく (iku)", mean: "Pergi", ex: "学校に行く (Pergi ke sekolah)" },
+            { kanji: "来る", kana: "くる (kuru)", mean: "Datang", ex: "ここに来る (Datang ke sini)" },
+            { kanji: "帰る", kana: "かえる (kaeru)", mean: "Pulang", ex: "家に帰る (Pulang ke rumah)" },
+            { kanji: "食べる", kana: "たべる (taberu)", mean: "Makan", ex: "朝ごはんを食べる (Makan sarapan)" },
+            { kanji: "飲む", kana: "のむ (nomu)", mean: "Minum", ex: "お茶を飲む (Minum teh)" },
+            { kanji: "見る", kana: "みる (miru)", mean: "Melihat/Menonton", ex: "映画を見る (Menonton film)" },
+            { kanji: "聞く", kana: "きく (kiku)", mean: "Mendengar", ex: "音楽を聞く (Mendengar musik)" },
+            { kanji: "読む", kana: "よむ (yomu)", mean: "Membaca", ex: "本を読む (Membaca buku)" },
+            { kanji: "書く", kana: "かく (kaku)", mean: "Menulis", ex: "手紙を書く (Menulis surat)" },
+            { kanji: "買う", kana: "かう (kau)", mean: "Membeli", ex: "パンを買う (Membeli roti)" },
+            { kanji: "撮る", kana: "とる (toru)", mean: "Mengambil (foto)", ex: "写真を撮る (Memotret)" },
+            { kanji: "会う", kana: "あう (au)", mean: "Bertemu", ex: "友達に会う (Bertemu teman)" },
+            { kanji: "遊ぶ", kana: "あそぶ (asobu)", mean: "Bermain", ex: "公園で遊ぶ (Bermain di taman)" },
+            { kanji: "待つ", kana: "まつ (matsu)", mean: "Menunggu", ex: "駅で待つ (Menunggu di stasiun)" },
+            { kanji: "話す", kana: "はなす (hanasu)", mean: "Berbicara", ex: "日本語で話す (Berbicara dalam bahasa Jepang)" },
+            { kanji: "寝る", kana: "ねる (neru)", mean: "Tidur", ex: "早く寝る (Tidur lebih awal)" },
+            { kanji: "起きる", kana: "おきる (okiru)", mean: "Bangun", ex: "六時に起きる (Bangun jam 6)" },
+            { kanji: "座る", kana: "すわる (suwaru)", mean: "Duduk", ex: "椅子に座る (Duduk di kursi)" },
+            { kanji: "立つ", kana: "たつ (tatsu)", mean: "Berdiri", ex: "ここに立つ (Berdiri di sini)" },
+            { kanji: "作る", kana: "つくる (tsukuru)", mean: "Membuat", ex: "料理を作る (Membuat masakan)" }
+        ];
+
+        const dataJerman = [
+            { title: "Masa Awal dan Abad Pertengahan (suku jermanik)", desc: "Wilayah Jerman dihuni suku-suku Jermanik. Nama 'Jerman' berasal dari kata Latin 'Germania' yang dipakai Julius Caesar." },
+            { title: "Kekaisaran Romawi Suci (Holy Roman Empire)", desc: "entitas politik kompleks di Eropa Tengah yang berlangsung dari sekitar tahun 962 hingga 1806, merupakan kelanjutan dari Kerajaan Franka Timur yang mencakup wilayah Jerman modern, Italia, dan lainnya, dipimpin oleh Kaisar yang dipilih (elektif) dan secara de facto terdiri dari ratusan negara-negara kecil dengan otonomi tinggi, berakhir akibat tekanan Napoleon." },
+            { title: "Reformasi dan Prusia (reformasi protestan 1517)", desc: "Martin Luther memulai perpecahan dari Gereja Katolik, memicu konflik agama besar di Jerman." },
+            { title: "Kebangkitan Prusia", desc: "Kerajaan Prusia menjadi kekuatan dominan di antara negara-negara Jerman, memimpin penyatuan di kemudian hari." },
+            { title: "Penyatuan dan Kekaisaran Jerman 1871(unifikasi jerman)", desc: "Otto von Bismarck (Prusia) menyatukan negara-negara Jerman melalui perang, membentuk Kekaisaran Jerman (Deutsches Kaiserreich) pada 1871." },
+            { title: "Kolonialisme", desc: "Jerman bersaing untuk koloni di Afrika dan Asia, meningkatkan ketegangan globa." },
+            { title: "Dua Perang Dunia I (1914-1918)", desc: "dimulai dengan Kekaisaran Jerman sebagai kekuatan utama Blok Sentral, terlibat setelah Austria-Hongaria menyatakan perang terhadap Serbia, bertempur di Front Timur & Barat, menghadapi blokade laut Inggris yang menyebabkan kelaparan (Musim Dingin Turnip), hingga akhirnya kekalahan memicu Revolusi Jerman 1918-1919 yang menggulingkan monarki dan melahirkan Republik Weimar, dengan kekalahan resmi ditandai gencatan senjata 11 November 1918 dan Perjanjian Versailles 1919 yang berat." },
+            { title: "Republik Weimar (1919-1933)", desc: " lahir dari kekalahan Perang Dunia I, dicirikan oleh demokrasi parlementer, kebebasan budaya yang dinamis, namun diguncang ketidakstabilan politik, hiperinflasi, dan krisis ekonomi akibat Perjanjian Versailles, yang akhirnya membuka jalan bagi kebangkitan Partai Nazi dan rezim Hitler. Nama 'Weimar' berasal karena konstitusi republik ini dirancang di kota Weimar, bukan di Berlin yang dianggap terlalu bergejolak. Berakhirnya Kekaisaran: Setelah kekalahan Jerman di PD I, Kaisar Wilhelm II turun takhta pada November 1918, mengakhiri monarki." },
+            { title: "Kebangkitan Nazi", desc: "Kebangkitan Nazi di Jerman adalah proses dari kekalahan Perang Dunia I, ketidakstabilan Republik Weimar, Depresi Besar 1929, hingga memanfaatkan sentimen nasionalis dan anti-Semit untuk mendapatkan dukungan massa, di mana Adolf Hitler diangkat menjadi Kanselir pada 1933, membangun rezim totaliter Reich Ketiga, menguasai negara melalui undang-undang darurat, dan memulai ekspansi teritorial serta Holocaust." },
+            { title: "Holocaust", desc: "Holocaust adalah penganiayaan dan pembantaian sistematis yang didukung oleh negara Jerman Nazi di bawah kepemimpinan Adolf Hitler terhadap sekitar enam juta orang Yahudi Eropa antara tahun 1933 hingga 1945. 'Ideologi Rasial': Nazi percaya pada superioritas ras 'Arya' dan menganggap orang Yahudi sebagai 'polusi ras' atau ancaman bagi masyarakat." },
+            { title: "Perang Dunia II (1939-1945)", desc: "Invasi Polandia oleh Hitler memicu PD II. Perang berakhir dengan kekalahan Jerman, bunuh diri Hitler, dan kehancuran besar." },
+            { title: "Jerman Terbagi (Perang Dingin) Pemisahan (1949)", desc: "Jerman terbagi menjadi Jerman Barat (Republik Federal Jerman/RFJ, Demokratis) dan Jerman Timur (Republik Demokratik Jerman/RDJ, Komunis, di bawah Soviet)." },
+            { title: "Tembok Berlin (1961-1989)", desc: "tembok beton pembatas sepanjang sekitar 155 km yang dibangun Jerman Timur (Jerman Demokratik) dari 1961 hingga 1989 untuk mencegah warganya kabur ke Berlin Barat, menjadi simbol kuat Perang Dingin, dan akhirnya runtuh pada 9 November 1989, menandai awal reunifikasi Jerman. Tembok ini memisahkan Berlin Timur dan Barat secara fisik dan ideologis, dengan 'jalur kematian' di antaranya, dan banyak nyawa hilang saat mencoba melintasinya." },
+            { title: "Penyatuan Kembali dan Jerman Modern. Runtuhnya Tembok Berlin (1989)", desc: "Runtuhnya Tembok Berlin pada 9 November 1989 adalah puncak dari ketidakpuasan publik dan reformasi di Eropa Timur, dipicu oleh pengumuman tak terduga dari pejabat Jerman Timur yang mengizinkan warga untuk melintasi perbatasan, menyebabkan kerumunan besar membanjiri tembok dan petugas akhirnya membuka perbatasan, menandai akhir segregasi 28 tahun, berakhirnya Perang Dingin, dan membuka jalan bagi penyatuan kembali Jerman setahun kemudian pada 3 Oktober 1990." },
+            { title: "Reunifikasi (3 oktober1990)", desc: "bersatunya kembali Republik Demokratik Jerman (Jerman Timur/GDR) dengan Republik Federal Jerman (Jerman Barat/FRG) setelah terpisah selama 45 tahun akibat Perang Dingin." },
+            { title: "Jerman Bersatu (sejak 1990)", desc: "Menjadi negara demokrasi parlementer, anggota Uni Eropa, dan kekuatan ekonomi utama dunia." }
+        ];
+
+        function showLoading(text, callback) {
+            const overlay = document.getElementById('loading-overlay');
+            document.getElementById('loading-text').innerText = text;
+            overlay.style.display = 'flex';
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                callback();
+            }, 1200);
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const u = document.getElementById('username').value.toLowerCase();
+            const p = document.getElementById('password').value;
+
+            if (u === 'akbar') {
+                if (p === '2010') {
+                    showLoading("Mengambil arsip Rusia...", () => showSection('historyRussiaContainer', dataRusia, 'russia-list'));
+                } else if (p === '2011') {
+                    showLoading("Memuat data Kanji...", () => showSection('doushiContainer', dataKanji, 'verbs-list'));
+                } else if (p === '2012') {
+                    showLoading("Mengakses arsip Jerman...", () => showSection('historyGermanContainer', dataJerman, 'german-list'));
+                } else {
+                    alert('Password salah!');
+                }
+            } else {
+                alert('Username tidak dikenal!');
+            }
+        });
+
+        function showSection(id, data, listId) {
+            document.getElementById('loginContainer').style.display = 'none';
+            
+            // PERBAIKAN: Set body ke flex-start agar konten bisa memanjang ke bawah
+            document.body.style.alignItems = 'flex-start';
+            
+            const container = document.getElementById(id);
+            container.style.display = 'block';
+            
+            const listDiv = document.getElementById(listId);
+            listDiv.innerHTML = data.map(item => `
+                <div class="card">
+                    ${item.kanji ? `<div class="kanji">${item.kanji}</div>` : `<h2>${item.title}</h2>`}
+                    <p>${item.kana ? `<b>Bacaan:</b> ${item.kana}` : item.desc}</p>
+                    ${item.mean ? `<p><b>Arti:</b> ${item.mean}</p><p><i>${item.ex}</i></p>` : ''}
+                </div>
+            `).join('');
+            
+            // Scroll otomatis ke atas setelah muncul
+            window.scrollTo(0,0);
+        }
+
+        function triggerLogout() {
+            showLoading("Mengunci dokumen...", () => {
+                location.reload(); 
+            });
+        }
+
+        function searchContent(containerId) {
+            let input = event.target.value.toLowerCase();
+            let cards = document.querySelectorAll(`#${containerId} .card`);
+            cards.forEach(c => c.style.display = c.innerText.toLowerCase().includes(input) ? "block" : "none");
+        }
+    </script>
+</body>
+</html>
